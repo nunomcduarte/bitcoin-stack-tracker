@@ -6,7 +6,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // DOM Elements
     const transactionForm = document.getElementById('transaction-form');
-    const transactionsTable = document.getElementById('transactions-table');
+    const transactionTypeInput = document.getElementById('transaction-type');
+    const transactionDateInput = document.getElementById('transaction-date');
+    const transactionAmountInput = document.getElementById('transaction-amount');
+    const transactionPriceInput = document.getElementById('transaction-price');
+    const transactionFeeInput = document.getElementById('transaction-fee');
+    const transactionNotesInput = document.getElementById('transaction-notes');
     const transactionsBody = document.getElementById('transactions-body');
     
     // Dashboard Elements
@@ -24,7 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectedPriceElement = document.getElementById('selected-price');
     const manualPriceContainer = document.getElementById('manual-price-container');
     const pricePerBtcInput = document.getElementById('price-per-btc');
-    const transactionDateInput = document.getElementById('transaction-date');
     
     // FIFO Calculator Elements
     const fifoYearSelect = document.getElementById('fifo-year-select');
@@ -33,6 +37,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const fifoExplanation = document.getElementById('fifo-explanation');
     const calculateFifoBtn = document.getElementById('calculate-fifo-btn');
     const downloadReportBtn = document.getElementById('download-report-btn');
+    
+    // Initialize the form with current date
+    const today = new Date();
+    if (transactionDateInput) {
+        transactionDateInput.valueAsDate = today;
+    }
     
     // Load transactions from localStorage
     function loadTransactions() {
@@ -58,10 +68,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Show empty state when no transactions
     function showEmptyState() {
-        if (transactions.length === 0) {
+        if (transactionsBody && transactions.length === 0) {
             transactionsBody.innerHTML = `
                 <tr>
-                    <td colspan="9" class="empty-state">
+                    <td colspan="8" class="empty-state">
                         <p>No transactions yet. Add your first Bitcoin transaction above!</p>
                     </td>
                 </tr>
@@ -79,6 +89,15 @@ document.addEventListener('DOMContentLoaded', function() {
         renderTransactions();
         updateDashboard();
         updateFifoYearOptions();
+        
+        // Reset form
+        if (transactionForm) {
+            transactionForm.reset();
+            if (transactionDateInput) {
+                transactionDateInput.valueAsDate = today;
+            }
+            updateSelectedPrice();
+        }
     }
     
     // Remove a transaction
@@ -124,9 +143,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const txs = JSON.parse(JSON.stringify(transactions));
         
         txs.forEach(tx => {
-            tx.date = new Date(tx.date); // Convert back to Date object
+            tx.date = new Date(tx.date);
             tx.profit = 0; // Initialize profit field
-            
+        });
+        
+        // Process all transactions for FIFO calculation
+        txs.forEach(tx => {
             if (tx.type === 'buy') {
                 // Add to buy queue with remaining amount
                 buyQueue.push({
@@ -143,6 +165,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Handle case where selling without any buys (shouldn't happen in practice)
                 if (buyQueue.length === 0) {
                     tx.profit = (tx.price * tx.amount) - tx.fee;
+                    totalRealizedProfit += tx.profit;
                     return;
                 }
                 
@@ -428,8 +451,14 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // For each transaction, create a table row
-        transactions.forEach(tx => {
+        // Calculate profits using FIFO
+        calculateFIFO();
+        
+        // Sort transactions newest first for display
+        const sortedTransactions = [...transactions].sort((a, b) => b.date - a.date);
+        
+        // Add each transaction to the table
+        sortedTransactions.forEach(tx => {
             const row = document.createElement('tr');
             
             // Format date
@@ -438,18 +467,26 @@ document.addEventListener('DOMContentLoaded', function() {
             // Calculate total in USD
             const totalUSD = tx.amount * tx.price;
             
+            // Format profit/loss (only for sell transactions)
+            let profitLossHTML = '-';
+            if (tx.type === 'sell' && tx.profit !== undefined) {
+                const profitClass = tx.profit >= 0 ? 'profit' : 'loss';
+                profitLossHTML = `<span class="${profitClass}">${formatCurrency(tx.profit)}</span>`;
+            }
+            
             // Create row content
             row.innerHTML = `
                 <td>${dateFormatted}</td>
-                <td>${tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}</td>
+                <td class="${tx.type}">${tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}</td>
                 <td>${formatBTC(tx.amount)}</td>
                 <td>${formatCurrency(tx.price)}</td>
                 <td>${formatCurrency(totalUSD)}</td>
                 <td>${formatCurrency(tx.fee)}</td>
-                <td class="${tx.profit > 0 ? 'profit' : tx.profit < 0 ? 'loss' : ''}">${tx.type === 'sell' ? formatCurrency(tx.profit) : '-'}</td>
-                <td>${tx.notes}</td>
+                <td>${profitLossHTML}</td>
                 <td class="actions">
-                    <button data-id="${tx.id}" class="delete-btn">🗑️</button>
+                    <button class="delete-btn" data-id="${tx.id}">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
                 </td>
             `;
             
@@ -459,9 +496,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add event listeners to delete buttons
         const deleteButtons = document.querySelectorAll('.delete-btn');
         deleteButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                const id = e.target.getAttribute('data-id');
-                removeTransaction(id);
+            button.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                if (confirm('Are you sure you want to delete this transaction?')) {
+                    removeTransaction(id);
+                }
             });
         });
     }
@@ -983,10 +1022,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return bitcoinPrice;
         } catch (error) {
             console.error('Error fetching Bitcoin price:', error);
+            
             // Use a fallback price if API fails
             if (bitcoinPrice === 0) {
                 bitcoinPrice = 30000; // Fallback value
             }
+            
             return bitcoinPrice;
         }
     }
@@ -1020,37 +1061,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update the price based on the selected option
     async function updateSelectedPrice() {
-        const selectedOption = document.querySelector('input[name="price-option"]:checked').value;
+        if (!priceOptionInputs.length || !transactionPriceInput) return;
         
-        switch (selectedOption) {
-            case 'current':
-                selectedPrice = bitcoinPrice;
-                selectedPriceElement.textContent = formatCurrency(selectedPrice).replace('$', '');
-                break;
-                
-            case 'historical':
-                if (transactionDateInput.value) {
-                    const selectedDate = new Date(transactionDateInput.value);
-                    const historicalPrice = await fetchHistoricalPrice(selectedDate);
-                    if (historicalPrice > 0) {
-                        selectedPrice = historicalPrice;
-                        selectedPriceElement.textContent = formatCurrency(selectedPrice).replace('$', '');
-                    }
-                } else {
-                    selectedPriceElement.textContent = "Select a date";
-                }
-                break;
-                
-            case 'manual':
-                const manualPrice = parseFloat(pricePerBtcInput.value);
-                if (!isNaN(manualPrice) && manualPrice > 0) {
-                    selectedPrice = manualPrice;
-                    selectedPriceElement.textContent = formatCurrency(selectedPrice).replace('$', '');
-                } else {
-                    selectedPrice = 0;
-                    selectedPriceElement.textContent = "Enter price";
-                }
-                break;
+        const selectedOption = document.querySelector('input[name="price-option"]:checked')?.value;
+        if (!selectedOption) return;
+        
+        if (selectedOption === 'current') {
+            // Fetch and use current price
+            const price = await fetchBitcoinPrice();
+            transactionPriceInput.value = price.toFixed(2);
+        } else if (selectedOption === 'custom') {
+            // Custom price will be entered by user
+            transactionPriceInput.value = '';
+            transactionPriceInput.focus();
         }
     }
     
@@ -1092,16 +1115,16 @@ document.addEventListener('DOMContentLoaded', function() {
     transactionForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
-        // Get form values
-        const type = document.getElementById('transaction-type').value;
-        const dateStr = document.getElementById('transaction-date').value;
-        const amount = parseFloat(document.getElementById('btc-amount').value);
-        const fee = parseFloat(document.getElementById('fee').value) || 0;
-        const notes = document.getElementById('notes').value;
+        const type = transactionTypeInput.value;
+        const date = new Date(transactionDateInput.value);
+        const amount = parseFloat(transactionAmountInput.value);
+        const price = parseFloat(transactionPriceInput.value);
+        const fee = parseFloat(transactionFeeInput.value || 0);
+        const notes = transactionNotesInput.value;
         
         // Validate inputs
-        if (!dateStr || isNaN(amount) || amount <= 0) {
-            alert('Please fill out all required fields with valid values.');
+        if (!type || isNaN(date.getTime()) || isNaN(amount) || amount <= 0 || isNaN(price) || price <= 0) {
+            alert('Please fill in all required fields with valid values.');
             return;
         }
         
@@ -1113,7 +1136,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // For sell transactions, check if user has enough Bitcoin
         if (type === 'sell') {
-            const transactionDate = new Date(dateStr);
+            const transactionDate = new Date(date);
             const availableBtc = getAvailableBitcoinBalance(transactionDate);
             
             if (amount > availableBtc) {
@@ -1125,7 +1148,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Create transaction object
         const transaction = {
             type,
-            date: new Date(dateStr),
+            date,
             amount,
             price: selectedPrice,
             fee,

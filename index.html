@@ -5,15 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bitcoin Stack Tracker</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Bitcoin Stack Tracker</h1>
+            <h1>Bitcoin Tracker</h1>
             <nav class="main-nav">
                 <ul>
-                    <li><a href="index.html" class="active">Transactions</a></li>
-                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li>
+                        <a href="dashboard.html">
+                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="index.html" class="active">
+                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                            Transactions
+                        </a>
+                    </li>
+                    <li>
+                        <a href="calculator.html">
+                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="12" y1="10" x2="12" y2="16"></line><line x1="9" y1="13" x2="15" y2="13"></line></svg>
+                            FIFO Calculator
+                        </a>
+                    </li>
                 </ul>
             </nav>
             <p>Track your Bitcoin purchases, sales, and calculate capital gains</p>
@@ -67,11 +84,12 @@
             </section>
             
             <section class="transaction-entry">
-                <h2>Add Transaction</h2>
+                <h2>Add New Transaction</h2>
                 <form id="transaction-form">
                     <div class="form-group">
                         <label for="transaction-type">Type</label>
                         <select id="transaction-type" required>
+                            <option value="">Select Type</option>
                             <option value="buy">Buy</option>
                             <option value="sell">Sell</option>
                         </select>
@@ -83,46 +101,33 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="btc-amount">BTC Amount</label>
-                        <input type="number" id="btc-amount" step="0.00000001" min="0" required>
+                        <label for="transaction-amount">BTC Amount</label>
+                        <input type="number" id="transaction-amount" step="0.00000001" min="0.00000001" placeholder="0.0" required>
                     </div>
                     
                     <div class="form-group">
-                        <label>Price Selection</label>
+                        <label for="transaction-price">Price per BTC (USD)</label>
                         <div class="price-options">
-                            <div class="price-option">
+                            <div>
                                 <input type="radio" id="price-current" name="price-option" value="current" checked>
-                                <label for="price-current">Current Market Price</label>
+                                <label for="price-current">Use Current Price</label>
                             </div>
-                            <div class="price-option">
-                                <input type="radio" id="price-historical" name="price-option" value="historical">
-                                <label for="price-historical">Historical Price (on selected date)</label>
-                            </div>
-                            <div class="price-option">
-                                <input type="radio" id="price-manual" name="price-option" value="manual">
-                                <label for="price-manual">Manual Price</label>
+                            <div>
+                                <input type="radio" id="price-custom" name="price-option" value="custom">
+                                <label for="price-custom">Enter Custom Price</label>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div id="manual-price-container" class="form-group" style="display: none;">
-                        <label for="price-per-btc">Price per BTC (USD)</label>
-                        <input type="number" id="price-per-btc" step="0.01" min="0">
-                    </div>
-                    
-                    <div id="price-display" class="form-group">
-                        <label>Selected Price</label>
-                        <div class="price-display-value">$<span id="selected-price">0.00</span></div>
+                        <input type="number" id="transaction-price" step="0.01" min="0.01" placeholder="0.00" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="fee">Fee (USD)</label>
-                        <input type="number" id="fee" step="0.01" min="0" value="0">
+                        <label for="transaction-fee">Fee (USD)</label>
+                        <input type="number" id="transaction-fee" step="0.01" min="0" placeholder="0.00" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="notes">Notes</label>
-                        <textarea id="notes"></textarea>
+                        <label for="transaction-notes">Notes</label>
+                        <textarea id="transaction-notes" placeholder="Add any notes about this transaction..."></textarea>
                     </div>
                     
                     <button type="submit" class="btn-primary">Add Transaction</button>
@@ -131,24 +136,25 @@
             
             <section class="transactions">
                 <h2>Transaction History</h2>
-                <table id="transactions-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Type</th>
-                            <th>BTC Amount</th>
-                            <th>Price per BTC</th>
-                            <th>Total (USD)</th>
-                            <th>Fee</th>
-                            <th>Profit/Loss</th>
-                            <th>Notes</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="transactions-body">
-                        <!-- Transactions will be added here dynamically -->
-                    </tbody>
-                </table>
+                <div id="transaction-list">
+                    <table id="transactions-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                                <th>Fee</th>
+                                <th>Profit/Loss</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-body">
+                            <!-- Transactions will be added here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
             </section>
             
             <section class="fifo-calculator">

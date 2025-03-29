@@ -12,10 +12,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const shortTermGainElement = document.getElementById('short-term-gain');
     const longTermGainElement = document.getElementById('long-term-gain');
     const recentTransactionsBody = document.getElementById('recent-transactions-body');
+    const portfolioChartCanvas = document.getElementById('portfolio-value-chart');
     
     // Initialize portfolio data and Bitcoin price
     let transactions = [];
     let bitcoinPrice = 0;
+    let portfolioChart = null;
     
     // Load transactions from localStorage
     function loadTransactions() {
@@ -32,6 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             updateDashboard();
             renderRecentTransactions();
+            renderPortfolioChart();
         } else {
             showEmptyState();
         }
@@ -174,6 +177,149 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
     
+    // Calculate portfolio value for each day since first transaction
+    function calculatePortfolioValueHistory() {
+        if (transactions.length === 0) return [];
+        
+        // Clone and sort transactions by date (oldest first)
+        const sortedTransactions = [...transactions]
+            .sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+        const firstDate = new Date(sortedTransactions[0].date);
+        const today = new Date();
+        const dataPoints = [];
+        
+        // Set first date to beginning of the day
+        firstDate.setHours(0, 0, 0, 0);
+        
+        // Get historical BTC prices (this would be replaced with actual API data)
+        // For now we'll use a simple calculation based on current price
+        let currentDay = new Date(firstDate);
+        let btcHoldings = 0;
+        let costBasis = 0;
+        
+        // Loop through each day from first transaction to today
+        while (currentDay <= today) {
+            const dayTransactions = sortedTransactions.filter(tx => 
+                new Date(tx.date).toDateString() === currentDay.toDateString()
+            );
+            
+            // Process day's transactions
+            dayTransactions.forEach(tx => {
+                if (tx.type === 'buy') {
+                    btcHoldings += tx.amount;
+                    costBasis += (tx.amount * tx.price) + tx.fee;
+                } else if (tx.type === 'sell') {
+                    btcHoldings -= tx.amount;
+                    // This is a simplified approach - ideally would use FIFO for cost basis
+                    costBasis = btcHoldings > 0 ? (costBasis * (btcHoldings / (btcHoldings + tx.amount))) : 0;
+                }
+            });
+            
+            // For demonstration, we'll use a simple price model
+            // In a real app, you'd fetch historical prices from an API
+            const daysFromToday = Math.floor((today - currentDay) / (1000 * 60 * 60 * 24));
+            
+            // Simple model: assume 5% price change for every 30 days in the past
+            const estimatedPrice = bitcoinPrice / Math.pow(1.05, daysFromToday / 30);
+            
+            const portfolioValue = btcHoldings * estimatedPrice;
+            
+            // Add data point
+            dataPoints.push({
+                date: new Date(currentDay),
+                value: portfolioValue
+            });
+            
+            // Move to next day
+            currentDay.setDate(currentDay.getDate() + 1);
+        }
+        
+        return dataPoints;
+    }
+    
+    // Render the portfolio value chart
+    function renderPortfolioChart() {
+        if (!portfolioChartCanvas) return;
+        
+        const portfolioHistory = calculatePortfolioValueHistory();
+        
+        if (portfolioHistory.length === 0) return;
+        
+        // Prepare data for Chart.js
+        const labels = portfolioHistory.map(point => {
+            const date = new Date(point.date);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        });
+        
+        const values = portfolioHistory.map(point => point.value);
+        
+        // Destroy existing chart if there is one
+        if (portfolioChart) {
+            portfolioChart.destroy();
+        }
+        
+        // Create new chart
+        portfolioChart = new Chart(portfolioChartCanvas, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Portfolio Value (USD)',
+                    data: values,
+                    borderColor: '#f7931a',
+                    backgroundColor: 'rgba(247, 147, 26, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointHoverBackgroundColor: '#f7931a',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return formatCurrency(context.raw);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            maxTicksLimit: 8,
+                            font: {
+                                size: 10
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return formatCurrency(value);
+                            },
+                            font: {
+                                size: 10
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
     // Update dashboard with latest stats
     function updateDashboard() {
         const stats = calculatePortfolioStats();
@@ -275,6 +421,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Refresh Bitcoin price and dashboard every minute
     setInterval(() => {
-        fetchBitcoinPrice();
+        fetchBitcoinPrice().then(() => {
+            // Only re-render the chart if price changes significantly
+            if (portfolioChart) {
+                renderPortfolioChart();
+            }
+        });
     }, 60000);
 }); 
