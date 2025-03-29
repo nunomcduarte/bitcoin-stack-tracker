@@ -10,8 +10,10 @@
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>Bitcoin Tracker</h1>
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>Bitcoin Tracker</h1>
+            </div>
             <nav class="main-nav">
                 <ul>
                     <li>
@@ -34,14 +36,14 @@
                     </li>
                 </ul>
             </nav>
-        </header>
+        </aside>
         
-        <main>
+        <main class="main-content">
             <section class="dashboard-overview">
                 <div class="dashboard-header">
                     <h2>Portfolio Overview</h2>
                     <div class="btc-price-container">
-                        <div class="btc-price-label">Current BTC Price:</div>
+                        <div class="btc-price-label">CURRENT BTC PRICE</div>
                         <div class="btc-price-value" id="current-btc-price">Loading...</div>
                         <div class="btc-price-updated">Last updated: <span id="price-update-time">-</span></div>
                     </div>
@@ -50,7 +52,17 @@
                 <div class="dashboard-cards">
                     <div class="dashboard-card">
                         <div class="card-icon">
-                            <svg viewBox="0 0 24 24" width="36" height="36" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-title">Portfolio Value</div>
+                            <div class="card-value" id="current-value">$0.00</div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
                         </div>
                         <div class="card-content">
                             <div class="card-title">BTC Holdings</div>
@@ -60,17 +72,7 @@
                     
                     <div class="dashboard-card">
                         <div class="card-icon">
-                            <svg viewBox="0 0 24 24" width="36" height="36" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                        </div>
-                        <div class="card-content">
-                            <div class="card-title">Average Price</div>
-                            <div class="card-value" id="avg-cost">$0.00</div>
-                        </div>
-                    </div>
-                    
-                    <div class="dashboard-card">
-                        <div class="card-icon">
-                            <svg viewBox="0 0 24 24" width="36" height="36" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
                         </div>
                         <div class="card-content">
                             <div class="card-title">Total Investment</div>
@@ -80,7 +82,7 @@
                     
                     <div class="dashboard-card">
                         <div class="card-icon">
-                            <svg viewBox="0 0 24 24" width="36" height="36" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
+                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
                         </div>
                         <div class="card-content">
                             <div class="card-title">Unrealized P/L</div>
@@ -89,22 +91,28 @@
                         </div>
                     </div>
                 </div>
-            </section>
-            
-            <section class="dashboard-details">
-                <div class="detail-card portfolio-value">
+                
+                <div class="portfolio-chart">
                     <h3>Portfolio Value</h3>
                     <div class="portfolio-value-container">
-                        <div class="value-item">
-                            <div class="value-label">Current Value</div>
-                            <div class="value-amount" id="current-value">$0.00</div>
+                        <div class="value-items">
+                            <div class="value-item">
+                                <div class="value-label">Average Price</div>
+                                <div class="value-amount" id="avg-cost">$0.00</div>
+                            </div>
+                            <div class="value-item">
+                                <div class="value-label">24h Change</div>
+                                <div class="value-amount" id="change-24h">$0.00</div>
+                            </div>
                         </div>
                         <div class="chart-container">
                             <canvas id="portfolio-value-chart"></canvas>
                         </div>
                     </div>
                 </div>
-                
+            </section>
+            
+            <section class="dashboard-details">
                 <div class="detail-card realized-gains">
                     <h3>Realized Gains</h3>
                     <div class="realized-gains-container">
@@ -120,6 +128,22 @@
                             <div class="value-column">
                                 <div class="value-label">Long-term Gains</div>
                                 <div class="value-amount" id="long-term-gain">$0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="detail-card market-data">
+                    <h3>Market Data</h3>
+                    <div class="market-data-container">
+                        <div class="value-columns">
+                            <div class="value-column">
+                                <div class="value-label">BTC Dominance</div>
+                                <div class="value-amount" id="btc-dominance">0.00%</div>
+                            </div>
+                            <div class="value-column">
+                                <div class="value-label">24h Volume</div>
+                                <div class="value-amount" id="volume-24h">$0.00</div>
                             </div>
                         </div>
                     </div>

@@ -8,15 +8,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const unrealizedPlElement = document.getElementById('unrealized-pl');
     const plPercentageElement = document.getElementById('pl-percentage');
     const currentValueElement = document.getElementById('current-value');
+    const change24hElement = document.getElementById('change-24h');
     const realizedPlElement = document.getElementById('realized-pl');
     const shortTermGainElement = document.getElementById('short-term-gain');
     const longTermGainElement = document.getElementById('long-term-gain');
+    const btcDominanceElement = document.getElementById('btc-dominance');
+    const volume24hElement = document.getElementById('volume-24h');
     const recentTransactionsBody = document.getElementById('recent-transactions-body');
     const portfolioChartCanvas = document.getElementById('portfolio-value-chart');
     
     // Initialize portfolio data and Bitcoin price
     let transactions = [];
     let bitcoinPrice = 0;
+    let previousDayPrice = 0;
     let portfolioChart = null;
     
     // Load transactions from localStorage
@@ -35,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
             updateDashboard();
             renderRecentTransactions();
             renderPortfolioChart();
+            fetchMarketData();
         } else {
             showEmptyState();
         }
@@ -42,13 +47,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Show empty state when no transactions
     function showEmptyState() {
-        recentTransactionsBody.innerHTML = `
-            <tr>
-                <td colspan="5" class="empty-state">
-                    <p>No transactions yet. Add your first Bitcoin transaction on the Transactions page.</p>
-                </td>
-            </tr>
-        `;
+        if (recentTransactionsBody) {
+            recentTransactionsBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="empty-state">
+                        <p>No transactions yet. Add your first Bitcoin transaction on the Transactions page.</p>
+                    </td>
+                </tr>
+            `;
+        }
     }
     
     // Format currency for display
@@ -164,6 +171,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Calculate P/L percentage
         const plPercentage = totalInvestment > 0 ? unrealizedPL / totalInvestment : 0;
         
+        // Calculate 24h change
+        const previousValue = totalBtc * previousDayPrice;
+        const change24h = currentValue - previousValue;
+        
         return {
             totalBtc,
             averageCost,
@@ -173,7 +184,8 @@ document.addEventListener('DOMContentLoaded', function() {
             plPercentage,
             realizedPL: totalRealizedProfit,
             shortTermGains,
-            longTermGains
+            longTermGains,
+            change24h
         };
     }
     
@@ -192,9 +204,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set first date to beginning of the day
         firstDate.setHours(0, 0, 0, 0);
         
+        // For simulation, we need at least 30 days of data
+        const startDate = new Date(today);
+        startDate.setDate(today.getDate() - 180); // 6 months of data
+        
+        const simulationStartDate = firstDate < startDate ? firstDate : startDate;
+        
         // Get historical BTC prices (this would be replaced with actual API data)
         // For now we'll use a simple calculation based on current price
-        let currentDay = new Date(firstDate);
+        let currentDay = new Date(simulationStartDate);
         let btcHoldings = 0;
         let costBasis = 0;
         
@@ -216,12 +234,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             
-            // For demonstration, we'll use a simple price model
+            // For demonstration, we'll use a simple price model with some random variation
             // In a real app, you'd fetch historical prices from an API
             const daysFromToday = Math.floor((today - currentDay) / (1000 * 60 * 60 * 24));
             
-            // Simple model: assume 5% price change for every 30 days in the past
-            const estimatedPrice = bitcoinPrice / Math.pow(1.05, daysFromToday / 30);
+            // Base price changes by 5% every 30 days with some randomness
+            const baseChange = Math.pow(1.05, daysFromToday / 30);
+            const randomFactor = 0.9 + (Math.random() * 0.2); // Random between 0.9 and 1.1
+            const estimatedPrice = bitcoinPrice / (baseChange * randomFactor);
             
             const portfolioValue = btcHoldings * estimatedPrice;
             
@@ -254,6 +274,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const values = portfolioHistory.map(point => point.value);
         
+        // Create gradient fill
+        const ctx = portfolioChartCanvas.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(247, 147, 26, 0.2)');
+        gradient.addColorStop(1, 'rgba(247, 147, 26, 0)');
+        
         // Destroy existing chart if there is one
         if (portfolioChart) {
             portfolioChart.destroy();
@@ -268,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     label: 'Portfolio Value (USD)',
                     data: values,
                     borderColor: '#f7931a',
-                    backgroundColor: 'rgba(247, 147, 26, 0.1)',
+                    backgroundColor: gradient,
                     borderWidth: 2,
                     pointRadius: 0,
                     pointHoverRadius: 5,
@@ -289,30 +315,42 @@ document.addEventListener('DOMContentLoaded', function() {
                             label: function(context) {
                                 return formatCurrency(context.raw);
                             }
-                        }
+                        },
+                        backgroundColor: '#1a1a1a',
+                        titleColor: '#f7931a',
+                        bodyColor: '#eee',
+                        borderColor: '#333',
+                        borderWidth: 1
                     }
                 },
                 scales: {
                     x: {
                         grid: {
-                            display: false
+                            display: false,
+                            drawBorder: false
                         },
                         ticks: {
                             maxTicksLimit: 8,
                             font: {
                                 size: 10
-                            }
+                            },
+                            color: '#888'
                         }
                     },
                     y: {
                         beginAtZero: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)',
+                            drawBorder: false
+                        },
                         ticks: {
                             callback: function(value) {
                                 return formatCurrency(value);
                             },
                             font: {
                                 size: 10
-                            }
+                            },
+                            color: '#888'
                         }
                     }
                 }
@@ -320,44 +358,101 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Fetch market data
+    async function fetchMarketData() {
+        try {
+            const response = await fetch('https://api.coingecko.com/api/v3/global');
+            const data = await response.json();
+            
+            if (data && data.data) {
+                const btcDominance = data.data.market_cap_percentage.btc;
+                const totalVolume = data.data.total_volume.usd;
+                
+                if (btcDominanceElement) {
+                    btcDominanceElement.textContent = formatPercentage(btcDominance / 100);
+                }
+                
+                if (volume24hElement) {
+                    volume24hElement.textContent = formatCurrency(totalVolume);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching market data:', error);
+            
+            // Set fallback values
+            if (btcDominanceElement) btcDominanceElement.textContent = '42.5%';
+            if (volume24hElement) volume24hElement.textContent = '$35.8B';
+        }
+    }
+    
     // Update dashboard with latest stats
     function updateDashboard() {
         const stats = calculatePortfolioStats();
         
         // Update Bitcoin price display
-        currentBtcPriceElement.textContent = formatCurrency(bitcoinPrice);
-        priceUpdateTimeElement.textContent = new Date().toLocaleTimeString();
+        if (currentBtcPriceElement) {
+            currentBtcPriceElement.textContent = formatCurrency(bitcoinPrice);
+        }
+        if (priceUpdateTimeElement) {
+            priceUpdateTimeElement.textContent = new Date().toLocaleTimeString();
+        }
         
         // Update dashboard stats
-        totalBtcElement.textContent = formatBTC(stats.totalBtc);
-        avgCostElement.textContent = formatCurrency(stats.averageCost);
-        totalInvestmentElement.textContent = formatCurrency(stats.totalInvestment);
-        unrealizedPlElement.textContent = formatCurrency(stats.unrealizedPL);
-        currentValueElement.textContent = formatCurrency(stats.currentValue);
-        realizedPlElement.textContent = formatCurrency(stats.realizedPL);
-        shortTermGainElement.textContent = formatCurrency(stats.shortTermGains);
-        longTermGainElement.textContent = formatCurrency(stats.longTermGains);
+        if (totalBtcElement) totalBtcElement.textContent = formatBTC(stats.totalBtc);
+        if (avgCostElement) avgCostElement.textContent = formatCurrency(stats.averageCost);
+        if (totalInvestmentElement) totalInvestmentElement.textContent = formatCurrency(stats.totalInvestment);
+        if (unrealizedPlElement) unrealizedPlElement.textContent = formatCurrency(stats.unrealizedPL);
+        if (currentValueElement) currentValueElement.textContent = formatCurrency(stats.currentValue);
+        if (realizedPlElement) realizedPlElement.textContent = formatCurrency(stats.realizedPL);
+        if (shortTermGainElement) shortTermGainElement.textContent = formatCurrency(stats.shortTermGains);
+        if (longTermGainElement) longTermGainElement.textContent = formatCurrency(stats.longTermGains);
+        
+        // Update 24h change
+        if (change24hElement) {
+            change24hElement.textContent = formatCurrency(stats.change24h);
+            
+            if (stats.change24h > 0) {
+                change24hElement.className = 'value-amount profit';
+                change24hElement.textContent = '+' + change24hElement.textContent;
+            } else if (stats.change24h < 0) {
+                change24hElement.className = 'value-amount loss';
+            } else {
+                change24hElement.className = 'value-amount';
+            }
+        }
         
         // Update P/L percentage with color coding
-        plPercentageElement.textContent = formatPercentage(stats.plPercentage);
-        if (stats.plPercentage > 0) {
-            plPercentageElement.className = 'card-percentage positive';
-            plPercentageElement.textContent = '+' + plPercentageElement.textContent;
-        } else if (stats.plPercentage < 0) {
-            plPercentageElement.className = 'card-percentage negative';
-        } else {
-            plPercentageElement.className = 'card-percentage';
+        if (plPercentageElement) {
+            plPercentageElement.textContent = formatPercentage(stats.plPercentage);
+            if (stats.plPercentage > 0) {
+                plPercentageElement.className = 'card-percentage positive';
+                plPercentageElement.textContent = '+' + plPercentageElement.textContent;
+            } else if (stats.plPercentage < 0) {
+                plPercentageElement.className = 'card-percentage negative';
+            } else {
+                plPercentageElement.className = 'card-percentage';
+            }
         }
         
         // Add appropriate classes for profit/loss styling
-        unrealizedPlElement.className = 'card-value ' + (stats.unrealizedPL >= 0 ? 'profit' : 'loss');
-        realizedPlElement.className = 'value-amount ' + (stats.realizedPL >= 0 ? 'profit' : 'loss');
-        shortTermGainElement.className = 'value-amount ' + (stats.shortTermGains >= 0 ? 'profit' : 'loss');
-        longTermGainElement.className = 'value-amount ' + (stats.longTermGains >= 0 ? 'profit' : 'loss');
+        if (unrealizedPlElement) {
+            unrealizedPlElement.className = 'card-value ' + (stats.unrealizedPL >= 0 ? 'profit' : 'loss');
+        }
+        if (realizedPlElement) {
+            realizedPlElement.className = 'value-amount ' + (stats.realizedPL >= 0 ? 'profit' : 'loss');
+        }
+        if (shortTermGainElement) {
+            shortTermGainElement.className = 'value-amount ' + (stats.shortTermGains >= 0 ? 'profit' : 'loss');
+        }
+        if (longTermGainElement) {
+            longTermGainElement.className = 'value-amount ' + (stats.longTermGains >= 0 ? 'profit' : 'loss');
+        }
     }
     
     // Render recent transactions
     function renderRecentTransactions() {
+        if (!recentTransactionsBody) return;
+        
         if (transactions.length === 0) {
             showEmptyState();
             return;
@@ -393,9 +488,32 @@ document.addEventListener('DOMContentLoaded', function() {
     // Fetch current Bitcoin price from CoinGecko API
     async function fetchBitcoinPrice() {
         try {
-            const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
-            const data = await response.json();
-            bitcoinPrice = data.bitcoin.usd;
+            // Fetch current price
+            const currentResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+            const currentData = await currentResponse.json();
+            bitcoinPrice = currentData.bitcoin.usd;
+            
+            // Fetch previous day price (using another endpoint for simplicity)
+            // In a real app, you would use the historical endpoint with a specific date
+            try {
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                
+                // Get yesterday's price
+                previousDayPrice = bitcoinPrice * 0.98; // Fallback: assume 2% less than today
+                
+                // Try to get actual historical data
+                const historicalResponse = await fetch(`https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=2&interval=daily`);
+                const historicalData = await historicalResponse.json();
+                
+                if (historicalData && historicalData.prices && historicalData.prices.length > 1) {
+                    // Get yesterday's price from the response
+                    previousDayPrice = historicalData.prices[0][1];
+                }
+            } catch (error) {
+                console.error('Error fetching historical price:', error);
+                // Keep the fallback price if error
+            }
             
             // Update dashboard after getting the price
             updateDashboard();
@@ -407,6 +525,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Use a fallback price if API fails
             if (bitcoinPrice === 0) {
                 bitcoinPrice = 30000; // Fallback value
+                previousDayPrice = 29500; // Fallback previous day value
                 updateDashboard();
             }
             
@@ -422,6 +541,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Refresh Bitcoin price and dashboard every minute
     setInterval(() => {
         fetchBitcoinPrice().then(() => {
+            updateDashboard();
             // Only re-render the chart if price changes significantly
             if (portfolioChart) {
                 renderPortfolioChart();

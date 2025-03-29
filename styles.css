@@ -1,13 +1,16 @@
 :root {
   --primary-color: #f7931a; /* Bitcoin orange */
   --secondary-color: #888;
-  --bg-color: #121212;
-  --card-bg: #1e1e1e;
+  --bg-color: #0f0f0f;
+  --card-bg: #1a1a1a;
+  --card-secondary-bg: #222222;
   --text-color: #eee;
   --border-color: #333;
   --success-color: #28a745;
   --danger-color: #dc3545;
   --nav-bg-color: #0a0a0a;
+  --sidebar-width: 260px;
+  --header-height: 60px;
 }
 
 * {

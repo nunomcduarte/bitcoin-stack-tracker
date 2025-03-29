@@ -1,21 +1,65 @@
 /* Dashboard styles */
 
-/* Navigation styles */
-.main-nav {
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 100%;
+  padding: 0;
+  display: flex;
+  flex: 1;
+}
+
+/* Navigation sidebar */
+.sidebar {
+  width: var(--sidebar-width);
   background-color: var(--nav-bg-color);
-  border-radius: 4px;
-  margin-top: 15px;
+  position: fixed;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  border-right: 1px solid var(--border-color);
+}
+
+.sidebar-header {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+}
+
+.sidebar-header h1:before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-color: var(--primary-color);
+  border-radius: 50%;
+  margin-right: 10px;
 }
 
 .main-nav ul {
   display: flex;
+  flex-direction: column;
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 15px 0;
 }
 
 .main-nav li {
-  width: 100%;
+  margin: 5px 0;
 }
 
 .main-nav a {
@@ -24,7 +68,7 @@
   text-decoration: none;
   color: var(--secondary-color);
   font-weight: 500;
-  padding: 15px;
+  padding: 12px 20px;
   transition: all 0.3s ease;
   border-left: 3px solid transparent;
 }
@@ -41,9 +85,17 @@
 
 .main-nav a svg {
   margin-right: 10px;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   stroke: currentColor;
+}
+
+/* Main content area */
+.main-content {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  padding: 20px;
+  overflow-y: auto;
 }
 
 /* Dashboard overview */
@@ -61,72 +113,62 @@
 
 .dashboard-header h2 {
   margin: 0;
-  color: var(--secondary-color);
+  color: var(--text-color);
+  font-size: 1.3rem;
+  font-weight: 500;
 }
 
 .btc-price-container {
-  background-color: var(--primary-color);
-  color: white;
+  background-color: var(--card-bg);
+  color: var(--text-color);
   padding: 10px 15px;
   border-radius: 8px;
   text-align: right;
-  box-shadow: 0 2px 8px rgba(247, 147, 26, 0.3);
+  border: 1px solid var(--border-color);
 }
 
 .btc-price-label {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   margin-bottom: 5px;
+  color: var(--secondary-color);
 }
 
 .btc-price-value {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: bold;
-  margin-bottom: 5px;
+  color: var(--primary-color);
 }
 
 .btc-price-updated {
-  font-size: 0.8rem;
-  opacity: 0.8;
+  font-size: 0.7rem;
+  opacity: 0.7;
 }
 
 .dashboard-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
 }
 
 .dashboard-card {
   background-color: var(--card-bg);
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-  padding: 20px;
+  padding: 15px;
   display: flex;
-  align-items: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.dashboard-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  flex-direction: column;
+  border: 1px solid var(--border-color);
 }
 
 .card-icon {
-  flex: 0 0 50px;
-  margin-right: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: var(--primary-color);
+  margin-bottom: 10px;
 }
 
 .card-icon svg {
   stroke: var(--primary-color);
-  width: 40px;
-  height: 40px;
-  transition: transform 0.3s ease;
-}
-
-.dashboard-card:hover .card-icon svg {
-  transform: scale(1.1);
+  width: 24px;
+  height: 24px;
 }
 
 .card-content {
@@ -135,19 +177,21 @@
 
 .card-title {
   color: var(--secondary-color);
-  font-size: 0.9rem;
-  margin-bottom: 8px;
+  font-size: 0.8rem;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .card-value {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: bold;
   color: var(--text-color);
+  margin-bottom: 5px;
 }
 
 .card-percentage {
-  font-size: 0.9rem;
-  margin-top: 5px;
+  font-size: 0.8rem;
 }
 
 .card-percentage.positive {
@@ -156,6 +200,61 @@
 
 .card-percentage.negative {
   color: var(--danger-color);
+}
+
+/* Portfolio value chart */
+.portfolio-chart {
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 30px;
+  border: 1px solid var(--border-color);
+}
+
+.portfolio-chart h3 {
+  color: var(--secondary-color);
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.portfolio-value-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.value-items {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 15px;
+}
+
+.value-item {
+  margin-bottom: 5px;
+}
+
+.value-label {
+  font-size: 0.8rem;
+  color: var(--secondary-color);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.value-amount {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.chart-container {
+  height: 300px;
+  border-radius: 8px;
+  background-color: var(--card-secondary-bg);
+  padding: 15px;
+  margin-top: 10px;
 }
 
 /* Dashboard details */
@@ -168,50 +267,21 @@
 .detail-card {
   background-color: var(--card-bg);
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   padding: 20px;
   margin-bottom: 20px;
+  border: 1px solid var(--border-color);
 }
 
 .detail-card h3 {
   color: var(--secondary-color);
   margin-top: 0;
   margin-bottom: 15px;
+  font-size: 1rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 10px;
-}
-
-.portfolio-value {
-  grid-column: span 2;
-}
-
-.portfolio-value-container {
-  display: flex;
-  flex-direction: column;
-}
-
-.value-item {
-  margin-bottom: 15px;
-}
-
-.value-label {
-  font-size: 0.9rem;
-  color: var(--secondary-color);
-  margin-bottom: 5px;
-}
-
-.value-amount {
-  font-size: 1.2rem;
-  font-weight: bold;
-}
-
-.chart-container {
-  height: 300px;
-  border-radius: 8px;
-  background-color: rgba(0, 0, 0, 0.2);
-  padding: 15px;
-  margin-top: 10px;
-  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
 }
 
 .realized-gains-container .value-item {
@@ -225,7 +295,7 @@
 
 .value-column {
   flex: 1;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--card-secondary-bg);
   border-radius: 4px;
   padding: 15px;
 }
@@ -247,8 +317,12 @@
 }
 
 .recent-transactions-table th {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--card-secondary-bg);
   font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--secondary-color);
 }
 
 .recent-transactions-table tr:last-child td {
@@ -278,6 +352,16 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+  }
+  
+  .main-content {
+    margin-left: 0;
+  }
+  
   .dashboard-header {
     flex-direction: column;
     align-items: flex-start;
@@ -291,10 +375,6 @@
   
   .dashboard-details {
     grid-template-columns: 1fr;
-  }
-  
-  .portfolio-value {
-    grid-column: span 1;
   }
   
   .recent-transactions {
