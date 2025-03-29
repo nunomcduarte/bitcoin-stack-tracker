@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Stack Tracker - Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Bitcoin Stack Tracker</h1>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html">Transactions</a></li>
+                    <li><a href="dashboard.html" class="active">Dashboard</a></li>
+                </ul>
+            </nav>
+        </header>
+        
+        <main>
+            <section class="dashboard-overview">
+                <div class="dashboard-header">
+                    <h2>Portfolio Overview</h2>
+                    <div class="btc-price-container">
+                        <div class="btc-price-label">Current BTC Price:</div>
+                        <div class="btc-price-value" id="current-btc-price">Loading...</div>
+                        <div class="btc-price-updated">Last updated: <span id="price-update-time">-</span></div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-cards">
+                    <div class="dashboard-card">
+                        <div class="card-icon">
+                            <img src="https://img.icons8.com/fluency/96/bitcoin.png" alt="Bitcoin Icon">
+                        </div>
+                        <div class="card-content">
+                            <div class="card-title">BTC Holdings</div>
+                            <div class="card-value" id="total-btc">0.00000000</div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <div class="card-icon">
+                            <img src="https://img.icons8.com/fluency/96/price-tag.png" alt="Price Tag Icon">
+                        </div>
+                        <div class="card-content">
+                            <div class="card-title">Average Price</div>
+                            <div class="card-value" id="avg-cost">$0.00</div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <div class="card-icon">
+                            <img src="https://img.icons8.com/fluency/96/money-bag.png" alt="Investment Icon">
+                        </div>
+                        <div class="card-content">
+                            <div class="card-title">Total Investment</div>
+                            <div class="card-value" id="total-investment">$0.00</div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <div class="card-icon">
+                            <img src="https://img.icons8.com/fluency/96/refund.png" alt="Profit Loss Icon">
+                        </div>
+                        <div class="card-content">
+                            <div class="card-title">Unrealized P/L</div>
+                            <div class="card-value" id="unrealized-pl">$0.00</div>
+                            <div class="card-percentage" id="pl-percentage">0.00%</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="dashboard-details">
+                <div class="detail-card portfolio-value">
+                    <h3>Portfolio Value</h3>
+                    <div class="portfolio-value-container">
+                        <div class="value-item">
+                            <div class="value-label">Current Value</div>
+                            <div class="value-amount" id="current-value">$0.00</div>
+                        </div>
+                        <div class="chart-container" id="portfolio-value-chart">
+                            <!-- Chart will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="detail-card realized-gains">
+                    <h3>Realized Gains</h3>
+                    <div class="realized-gains-container">
+                        <div class="value-item">
+                            <div class="value-label">Total Realized P/L</div>
+                            <div class="value-amount" id="realized-pl">$0.00</div>
+                        </div>
+                        <div class="value-columns">
+                            <div class="value-column">
+                                <div class="value-label">Short-term Gains</div>
+                                <div class="value-amount" id="short-term-gain">$0.00</div>
+                            </div>
+                            <div class="value-column">
+                                <div class="value-label">Long-term Gains</div>
+                                <div class="value-amount" id="long-term-gain">$0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="detail-card recent-transactions">
+                    <h3>Recent Transactions</h3>
+                    <table class="recent-transactions-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-transactions-body">
+                            <!-- Recent transactions will be added here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="app.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html> 
