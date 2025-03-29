@@ -16,12 +16,31 @@ document.addEventListener('DOMContentLoaded', function() {
     const volume24hElement = document.getElementById('volume-24h');
     const recentTransactionsBody = document.getElementById('recent-transactions-body');
     const portfolioChartCanvas = document.getElementById('portfolio-value-chart');
+    const periodButtons = document.querySelectorAll('.period-btn');
     
     // Initialize portfolio data and Bitcoin price
     let transactions = [];
     let bitcoinPrice = 0;
     let previousDayPrice = 0;
     let portfolioChart = null;
+    let currentPeriod = 'week';
+    let portfolioHistory = [];
+    
+    // Add event listeners to period buttons
+    if (periodButtons) {
+        periodButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Remove active class from all buttons
+                periodButtons.forEach(btn => btn.classList.remove('active'));
+                // Add active class to clicked button
+                this.classList.add('active');
+                // Update current period
+                currentPeriod = this.getAttribute('data-period');
+                // Render chart with new period
+                renderPortfolioChart();
+            });
+        });
+    }
     
     // Load transactions from localStorage
     function loadTransactions() {
@@ -38,6 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             updateDashboard();
             renderRecentTransactions();
+            generatePortfolioHistory();
             renderPortfolioChart();
             fetchMarketData();
         } else {
@@ -189,9 +209,12 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
     
-    // Calculate portfolio value for each day since first transaction
-    function calculatePortfolioValueHistory() {
-        if (transactions.length === 0) return [];
+    // Generate portfolio value history data
+    function generatePortfolioHistory() {
+        if (transactions.length === 0) {
+            portfolioHistory = [];
+            return;
+        }
         
         // Clone and sort transactions by date (oldest first)
         const sortedTransactions = [...transactions]
@@ -204,22 +227,34 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set first date to beginning of the day
         firstDate.setHours(0, 0, 0, 0);
         
-        // For simulation, we need at least 30 days of data
-        const startDate = new Date(today);
-        startDate.setDate(today.getDate() - 180); // 6 months of data
+        // Set start date based on first transaction date or 1 year ago, whichever is more recent
+        const oneYearAgo = new Date(today);
+        oneYearAgo.setFullYear(today.getFullYear() - 1);
         
-        const simulationStartDate = firstDate < startDate ? firstDate : startDate;
+        const simulationStartDate = firstDate < oneYearAgo ? oneYearAgo : firstDate;
         
-        // Get historical BTC prices (this would be replaced with actual API data)
-        // For now we'll use a simple calculation based on current price
         let currentDay = new Date(simulationStartDate);
         let btcHoldings = 0;
         let costBasis = 0;
         
-        // Loop through each day from first transaction to today
+        // Calculate BTC holdings up to simulation start date
+        sortedTransactions.forEach(tx => {
+            if (tx.date < simulationStartDate) {
+                if (tx.type === 'buy') {
+                    btcHoldings += tx.amount;
+                    costBasis += (tx.amount * tx.price) + tx.fee;
+                } else if (tx.type === 'sell') {
+                    btcHoldings -= tx.amount;
+                    costBasis = btcHoldings > 0 ? (costBasis * (btcHoldings / (btcHoldings + tx.amount))) : 0;
+                }
+            }
+        });
+        
+        // Loop through each day from simulation start to today
         while (currentDay <= today) {
             const dayTransactions = sortedTransactions.filter(tx => 
-                new Date(tx.date).toDateString() === currentDay.toDateString()
+                new Date(tx.date).toDateString() === currentDay.toDateString() &&
+                tx.date >= simulationStartDate
             );
             
             // Process day's transactions
@@ -238,10 +273,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // In a real app, you'd fetch historical prices from an API
             const daysFromToday = Math.floor((today - currentDay) / (1000 * 60 * 60 * 24));
             
-            // Base price changes by 5% every 30 days with some randomness
+            // Base price changes with a smoothed curve
             const baseChange = Math.pow(1.05, daysFromToday / 30);
-            const randomFactor = 0.9 + (Math.random() * 0.2); // Random between 0.9 and 1.1
-            const estimatedPrice = bitcoinPrice / (baseChange * randomFactor);
+            // Add slight noise but keep it smooth
+            const noise = Math.sin(daysFromToday * 0.1) * 0.05 + Math.sin(daysFromToday * 0.05) * 0.025;
+            const estimatedPrice = bitcoinPrice / (baseChange * (1 + noise));
             
             const portfolioValue = btcHoldings * estimatedPrice;
             
@@ -255,24 +291,52 @@ document.addEventListener('DOMContentLoaded', function() {
             currentDay.setDate(currentDay.getDate() + 1);
         }
         
-        return dataPoints;
+        portfolioHistory = dataPoints;
+    }
+    
+    // Filter portfolio history based on selected period
+    function getFilteredPortfolioHistory() {
+        if (!portfolioHistory.length) return [];
+        
+        const today = new Date();
+        let startDate;
+        
+        switch (currentPeriod) {
+            case 'week':
+                startDate = new Date(today);
+                startDate.setDate(today.getDate() - 7);
+                break;
+            case 'month':
+                startDate = new Date(today);
+                startDate.setMonth(today.getMonth() - 1);
+                break;
+            case 'year':
+                startDate = new Date(today);
+                startDate.setFullYear(today.getFullYear() - 1);
+                break;
+            default:
+                startDate = new Date(today);
+                startDate.setDate(today.getDate() - 7);
+        }
+        
+        return portfolioHistory.filter(point => point.date >= startDate);
     }
     
     // Render the portfolio value chart
     function renderPortfolioChart() {
         if (!portfolioChartCanvas) return;
         
-        const portfolioHistory = calculatePortfolioValueHistory();
+        const filteredHistory = getFilteredPortfolioHistory();
         
-        if (portfolioHistory.length === 0) return;
+        if (filteredHistory.length === 0) return;
         
         // Prepare data for Chart.js
-        const labels = portfolioHistory.map(point => {
+        const labels = filteredHistory.map(point => {
             const date = new Date(point.date);
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         });
         
-        const values = portfolioHistory.map(point => point.value);
+        const values = filteredHistory.map(point => point.value);
         
         // Create gradient fill
         const ctx = portfolioChartCanvas.getContext('2d');
@@ -299,7 +363,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     pointRadius: 0,
                     pointHoverRadius: 5,
                     pointHoverBackgroundColor: '#f7931a',
-                    tension: 0.3,
+                    tension: 0.4, // Increase tension for smoother curve
                     fill: true
                 }]
             },
@@ -330,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             drawBorder: false
                         },
                         ticks: {
-                            maxTicksLimit: 8,
+                            maxTicksLimit: currentPeriod === 'week' ? 7 : (currentPeriod === 'month' ? 10 : 12),
                             font: {
                                 size: 10
                             },
@@ -338,7 +402,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     },
                     y: {
-                        beginAtZero: true,
+                        beginAtZero: false, // Better scale for portfolio value
                         grid: {
                             color: 'rgba(255, 255, 255, 0.05)',
                             drawBorder: false
@@ -353,6 +417,18 @@ document.addEventListener('DOMContentLoaded', function() {
                             color: '#888'
                         }
                     }
+                },
+                elements: {
+                    line: {
+                        tension: 0.4 // Smooth the line curve
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                animation: {
+                    duration: 1000
                 }
             }
         });
@@ -542,7 +618,9 @@ document.addEventListener('DOMContentLoaded', function() {
     setInterval(() => {
         fetchBitcoinPrice().then(() => {
             updateDashboard();
-            // Only re-render the chart if price changes significantly
+            
+            // Regenerate portfolio history and render chart when price changes
+            generatePortfolioHistory();
             if (portfolioChart) {
                 renderPortfolioChart();
             }

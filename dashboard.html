@@ -62,7 +62,10 @@
                     
                     <div class="dashboard-card">
                         <div class="card-icon">
-                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                            <svg viewBox="0 0 24 24" width="24" height="24">
+                                <circle cx="12" cy="12" r="10" fill="#F7931A"/>
+                                <path d="M15.075 10.5c.17-.987-.602-1.516-1.628-1.87l.333-1.335-813-.202-.324 1.3-648.002-.162.324-1.299-.813-.203-.332 1.333c-.487-.114-.986-.218-1.468-.206l.128-.512-.813-.203-.324 1.3-.648-.162.201.809.442.11c.245.061.288.224.281.354l-.668 2.678c-.037.109-.142.27-.379.208l-.429-.107-.304 1.219.642.16c.358.09.707.194 1.051.278l-.342 1.37c.801.202.812.206.813.203l.338-1.359.648.162-.337 1.355c.812.201.812.201.813.201l.337-1.354.648.162.137-.547c2.448.46 4.292.273 5.069-1.942.625-1.784-.031-2.814-1.33-3.481.951-.218 1.673-.84 1.866-2.119zM12.836 11.382c-.445 1.783-3.459.818-4.428.578l.789-3.163c.968.242 4.084.722 3.639 2.585zm.493-4.618c-.406 1.62-2.913.794-3.729.594l.716-2.868c.816.205 3.419.584 3.013 2.274z" fill="white"/>
+                            </svg>
                         </div>
                         <div class="card-content">
                             <div class="card-title">BTC Holdings</div>
@@ -95,14 +98,21 @@
                 <div class="portfolio-chart">
                     <h3>Portfolio Value</h3>
                     <div class="portfolio-value-container">
-                        <div class="value-items">
-                            <div class="value-item">
-                                <div class="value-label">Average Price</div>
-                                <div class="value-amount" id="avg-cost">$0.00</div>
+                        <div class="chart-header">
+                            <div class="value-items">
+                                <div class="value-item">
+                                    <div class="value-label">Average Price</div>
+                                    <div class="value-amount" id="avg-cost">$0.00</div>
+                                </div>
+                                <div class="value-item">
+                                    <div class="value-label">24h Change</div>
+                                    <div class="value-amount" id="change-24h">$0.00</div>
+                                </div>
                             </div>
-                            <div class="value-item">
-                                <div class="value-label">24h Change</div>
-                                <div class="value-amount" id="change-24h">$0.00</div>
+                            <div class="chart-period-selector">
+                                <button class="period-btn active" data-period="week">Week</button>
+                                <button class="period-btn" data-period="month">Month</button>
+                                <button class="period-btn" data-period="year">Year</button>
                             </div>
                         </div>
                         <div class="chart-container">
