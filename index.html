@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Stack Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Bitcoin Stack Tracker</h1>
+            <p>Track your Bitcoin purchases, sales, and calculate capital gains</p>
+        </header>
+        
+        <main>
+            <section class="dashboard">
+                <div class="summary-card">
+                    <h2>Portfolio Summary</h2>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="label">Total BTC</span>
+                            <span class="value" id="total-btc">0.00000000</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">Average Cost</span>
+                            <span class="value" id="avg-cost">$0.00</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">Total Investment</span>
+                            <span class="value" id="total-investment">$0.00</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">Current Value</span>
+                            <span class="value" id="current-value">$0.00</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">Unrealized P/L</span>
+                            <span class="value" id="unrealized-pl">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="realized-gains">
+                    <h2>Realized Gains (FIFO)</h2>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="label">Total Realized Profit/Loss</span>
+                            <span class="value" id="realized-pl">$0.00</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">Short-term Gains</span>
+                            <span class="value" id="short-term-gain">$0.00</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="label">Long-term Gains</span>
+                            <span class="value" id="long-term-gain">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="transaction-entry">
+                <h2>Add Transaction</h2>
+                <form id="transaction-form">
+                    <div class="form-group">
+                        <label for="transaction-type">Type</label>
+                        <select id="transaction-type" required>
+                            <option value="buy">Buy</option>
+                            <option value="sell">Sell</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="transaction-date">Date</label>
+                        <input type="date" id="transaction-date" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="btc-amount">BTC Amount</label>
+                        <input type="number" id="btc-amount" step="0.00000001" min="0" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Price Selection</label>
+                        <div class="price-options">
+                            <div class="price-option">
+                                <input type="radio" id="price-current" name="price-option" value="current" checked>
+                                <label for="price-current">Current Market Price</label>
+                            </div>
+                            <div class="price-option">
+                                <input type="radio" id="price-historical" name="price-option" value="historical">
+                                <label for="price-historical">Historical Price (on selected date)</label>
+                            </div>
+                            <div class="price-option">
+                                <input type="radio" id="price-manual" name="price-option" value="manual">
+                                <label for="price-manual">Manual Price</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="manual-price-container" class="form-group" style="display: none;">
+                        <label for="price-per-btc">Price per BTC (USD)</label>
+                        <input type="number" id="price-per-btc" step="0.01" min="0">
+                    </div>
+                    
+                    <div id="price-display" class="form-group">
+                        <label>Selected Price</label>
+                        <div class="price-display-value">$<span id="selected-price">0.00</span></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fee">Fee (USD)</label>
+                        <input type="number" id="fee" step="0.01" min="0" value="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="notes">Notes</label>
+                        <textarea id="notes"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">Add Transaction</button>
+                </form>
+            </section>
+            
+            <section class="transactions">
+                <h2>Transaction History</h2>
+                <table id="transactions-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>BTC Amount</th>
+                            <th>Price per BTC</th>
+                            <th>Total (USD)</th>
+                            <th>Fee</th>
+                            <th>Profit/Loss</th>
+                            <th>Notes</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactions-body">
+                        <!-- Transactions will be added here dynamically -->
+                    </tbody>
+                </table>
+            </section>
+            
+            <section class="fifo-calculator">
+                <h2>FIFO Tax Year Calculator</h2>
+                <div class="calculator-container">
+                    <div class="calculator-controls">
+                        <div class="form-group">
+                            <label for="fifo-year-select">Select Tax Year:</label>
+                            <select id="fifo-year-select">
+                                <option value="">-- Select a year --</option>
+                            </select>
+                            <button id="calculate-fifo-btn" class="btn-primary">Calculate Gains</button>
+                        </div>
+                    </div>
+                    
+                    <div id="fifo-details-container" class="details-container">
+                        <div class="summary-section">
+                            <h3>Tax Year Summary</h3>
+                            <div id="fifo-sale-summary" class="fifo-summary">
+                                <p>Select a tax year and click Calculate Gains to view your capital gains for that year</p>
+                            </div>
+                        </div>
+                        
+                        <div class="report-section">
+                            <h3>FIFO Method Explanation</h3>
+                            <div id="fifo-explanation" class="fifo-explanation">
+                                <!-- FIFO explanation will be added here dynamically -->
+                            </div>
+                        </div>
+                        
+                        <div class="details-section">
+                            <h3>FIFO Calculation Details</h3>
+                            <table id="fifo-details-table">
+                                <thead>
+                                    <tr>
+                                        <th>Buy Date</th>
+                                        <th>BTC Amount</th>
+                                        <th>Buy Price</th>
+                                        <th>Cost Basis</th>
+                                        <th>Sell Date</th>
+                                        <th>Sell Price</th>
+                                        <th>Sale Revenue</th>
+                                        <th>Holding Period</th>
+                                        <th>Gain/Loss</th>
+                                        <th>Tax Category</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fifo-details-body">
+                                    <!-- FIFO details will be added here dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="report-actions">
+                            <button id="download-report-btn" class="btn-secondary" style="display: none;">Download Tax Report</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html> 
