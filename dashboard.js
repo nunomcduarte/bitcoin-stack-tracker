@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load transactions from localStorage
     function loadTransactions() {
         const savedTransactions = localStorage.getItem('bitcoin-transactions');
+        console.log('Dashboard loading transactions:', savedTransactions);
         if (savedTransactions) {
             transactions = JSON.parse(savedTransactions);
             transactions.forEach(tx => {
@@ -64,6 +65,14 @@ document.addEventListener('DOMContentLoaded', function() {
             showEmptyState();
         }
     }
+    
+    // Add a storage event listener to reload transactions when they change
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'bitcoin-transactions') {
+            console.log('Dashboard detected transaction data change');
+            loadTransactions();
+        }
+    });
     
     // Show empty state when no transactions
     function showEmptyState() {
@@ -618,6 +627,9 @@ document.addEventListener('DOMContentLoaded', function() {
     setInterval(() => {
         fetchBitcoinPrice().then(() => {
             updateDashboard();
+            
+            // Check for updated transactions
+            loadTransactions();
             
             // Regenerate portfolio history and render chart when price changes
             generatePortfolioHistory();

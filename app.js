@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load transactions from localStorage
     function loadTransactions() {
         const savedTransactions = localStorage.getItem('bitcoin-transactions');
+        console.log('Transaction page loading transactions:', savedTransactions);
         if (savedTransactions) {
             transactions = JSON.parse(savedTransactions);
             transactions.forEach(tx => {
@@ -64,6 +65,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Save transactions to localStorage
     function saveTransactions() {
         localStorage.setItem('bitcoin-transactions', JSON.stringify(transactions));
+        console.log('Saving transactions:', JSON.stringify(transactions));
+        
+        // Dispatch a storage event to notify other pages
+        const storageEvent = new StorageEvent('storage', {
+            key: 'bitcoin-transactions',
+            newValue: JSON.stringify(transactions),
+            url: window.location.href
+        });
+        window.dispatchEvent(storageEvent);
     }
     
     // Show empty state when no transactions
